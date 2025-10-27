@@ -1,0 +1,205 @@
+:root {
+    --primary: #4f46e5;
+    --secondary: #7c3aed;
+    --accent: #ec4899;
+    --neutral-800: #1f2937;
+    --neutral-700: #374151;
+    --neutral-200: #e5e7eb;
+    --neutral-100: #f3f4f6;
+    --white: #ffffff;
+    --success: #10b981;
+    --danger: #ef4444;
+}
+
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--neutral-100);
+    color: var(--neutral-700);
+}
+
+.sidebar {
+    background-color: var(--neutral-800);
+    transition: transform 0.3s ease-in-out;
+    z-index: 50;
+}
+
+@media (min-width: 768px) {
+    .sidebar {
+        transform: translateX(0) !important;
+    }
+}
+
+.sidebar-hidden {
+    transform: translateX(-100%);
+}
+
+.nav-item {
+    position: relative;
+    transition: all 0.3s ease;
+    color: #d1d5db;
+}
+
+.nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--white);
+}
+
+.nav-item.active {
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    color: var(--white);
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.content-container {
+    transition: all 0.3s ease;
+    margin-left: 250px;
+}
+
+.card {
+    background-color: var(--white);
+    border-radius: 1rem;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.btn-primary {
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    color: var(--white);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
+}
+
+input, textarea, select {
+    transition: all 0.3s ease;
+}
+input:focus, textarea:focus, select:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important;
+}
+
+@media (max-width: 768px) {
+    .content-container {
+        margin-left: 0 !important;
+    }
+}
+
+.schedule-table td:first-child, .candidates-table th:first-child, .candidates-table td:first-child {
+    min-width: 120px;
+    white-space: nowrap;
+    background-color: var(--neutral-200);
+    font-weight: 500;
+    padding: 8px;
+}
+.schedule-table td, .candidates-table th, .candidates-table td {
+    padding: 8px;
+    vertical-align: middle;
+}
+.schedule-table input[type="text"] {
+    width: 100px;
+}
+#file-info ul {
+    margin: 0;
+    padding-left: 1rem;
+}
+.table-container {
+    overflow-x: auto;
+    max-width: 100%;
+}
+.resume-viewer {
+    max-height: 600px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+}
+.pdf-viewer {
+    width: 100%;
+    height: 500px;
+    border: none;
+}
+/* Candidate Card Styles */
+.candidate-card {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    min-height: 300px;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    margin: 0 auto;
+    overflow: hidden;
+}
+.candidate-card.expanded {
+    max-height: none;
+    min-height: 400px;
+}
+.candidate-eye-icon {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    cursor: pointer;
+    z-index: 10;
+}
+.see-more {
+    display: none;
+    position: absolute;
+    bottom: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: pointer;
+    color: var(--primary);
+    font-weight: 500;
+}
+.candidate-card:hover .see-more,
+.candidate-card.expanded .see-more {
+    display: block;
+}
+.candidate-card.expanded .content {
+    max-height: none;
+}
+.content {
+    max-height: 200px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+.filter-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.icon-btn {
+    padding: 0.5rem;
+    border-radius: 9999px;
+    transition: background-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+.icon-btn:hover {
+    background-color: #f3f4f6;
+}

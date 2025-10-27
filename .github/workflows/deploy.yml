@@ -1,0 +1,27 @@
+name: Deploy FastAPI App to aaPanel
+
+on:
+  push:
+    branches:
+      - main  # or master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd /www/wwwroot/JHS_TCD
+          git pull origin main
+          source venv/bin/activate
+          pip install -r requirements.txt
+          supervisorctl restart fastapi_app
