@@ -17,9 +17,10 @@ jobs:
       run: |
         echo "=== SYSTEM INFO ==="
         uname -a
+        echo "Python version:"
         python3 --version || echo "Python not installed"
         echo "Current working directory: $(pwd)"
-        echo "Repository files:"
+        echo "Repository files (first 50):"
         ls -R | head -50
 
     - name: 🚀 Start Deployment via SSH
@@ -32,41 +33,55 @@ jobs:
         script_stop: true   # stop on first error
         debug: true         # enable detailed ssh debug logs
         script: |
-          echo "=== Connected to Server ==="
-          echo "Server Info:"
+          set -e  # stop script on any command failure
+
+          echo "=== 🟢 Connected to Server ==="
           uname -a
-          echo "Current Directory:"
-          pwd
-          echo "Listing Files in Deployment Path..."
-          cd /www/wwwroot/JHS_TCD || { echo "❌ ERROR: Path not found"; exit 1; }
+          echo "Current path: $(pwd)"
+          echo "Listing top-level directories..."
+          ls -al /
+
+          echo "=== 🔍 Validating Deployment Path ==="
+          if [ ! -d "/www/wwwroot/JHS_TCD" ]; then
+            echo "❌ ERROR: /www/wwwroot/JHS_TCD not found. Listing /www/wwwroot:"
+            ls -al /www/wwwroot || { echo "❌ ERROR: /www/wwwroot missing entirely"; exit 1; }
+            exit 1
+          fi
+
+          cd /www/wwwroot/JHS_TCD
+          echo "✅ Entered $(pwd)"
+          echo "Listing files:"
           ls -al
 
-          echo "=== Pulling Latest Code ==="
+          echo "=== 🔁 Pulling Latest Code from GitHub ==="
+          git status || echo "⚠️ Warning: Git repo not initialized"
           git fetch origin main || { echo "❌ ERROR: Git fetch failed"; exit 1; }
           git reset --hard origin/main || { echo "❌ ERROR: Git reset failed"; exit 1; }
+          echo "✅ Latest commit:"
           git log -1 --oneline
 
-          echo "=== Activating Virtual Environment ==="
+          echo "=== 🐍 Activating or Creating Virtual Environment ==="
           if [ -d "venv" ]; then
+            echo "Found existing venv. Activating..."
             source venv/bin/activate
-            echo "✅ Virtual environment activated."
           else
-            echo "⚠️  Virtual environment not found, creating..."
+            echo "Creating a new virtual environment..."
             python3 -m venv venv || { echo "❌ ERROR: Failed to create venv"; exit 1; }
             source venv/bin/activate
           fi
+          python --version
 
-          echo "=== Installing Dependencies ==="
+          echo "=== 📦 Installing Dependencies ==="
           pip install --upgrade pip
           pip install -r requirements.txt || { echo "❌ ERROR: Requirements installation failed"; exit 1; }
           echo "✅ Dependencies installed successfully."
 
-          echo "=== Restarting Supervisor Process ==="
+          echo "=== 🔁 Restarting Supervisor Process ==="
           supervisorctl reread || echo "⚠️ Warning: reread failed"
           supervisorctl update || echo "⚠️ Warning: update failed"
           supervisorctl restart JHS_TCD || { echo "❌ ERROR: Supervisor restart failed"; exit 1; }
 
-          echo "=== Checking Supervisor Status ==="
+          echo "=== 🔎 Checking Supervisor Status ==="
           supervisorctl status JHS_TCD || echo "⚠️ Could not verify supervisor process"
 
-          echo "=== Deployment Complete ✅ ==="
+          echo "=== ✅ Deployment Complete ==="
