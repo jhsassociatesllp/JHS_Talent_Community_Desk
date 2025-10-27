@@ -1,27 +1,72 @@
-name: Deploy FastAPI App to aaPanel
+name: 🚀 Deploy FastAPI App to aaPanel with Logs
 
 on:
   push:
     branches:
-      - main  # or master
+      - main  # Trigger deployment when code is pushed to main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: 🧾 Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Deploy via SSH
+    - name: 🧠 Show Environment Info
+      run: |
+        echo "=== SYSTEM INFO ==="
+        uname -a
+        python3 --version || echo "Python not installed"
+        echo "Current working directory: $(pwd)"
+        echo "Repository files:"
+        ls -R | head -50
+
+    - name: 🚀 Start Deployment via SSH
       uses: appleboy/ssh-action@v0.1.7
       with:
         host: ${{ secrets.SERVER_IP }}
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        script_stop: true   # stop on first error
+        debug: true         # enable detailed ssh debug logs
         script: |
-          cd /www/wwwroot/JHS_TCD
-          git pull origin main
-          source venv/bin/activate
-          pip install -r requirements.txt
-          supervisorctl restart JHS_TCD
+          echo "=== Connected to Server ==="
+          echo "Server Info:"
+          uname -a
+          echo "Current Directory:"
+          pwd
+          echo "Listing Files in Deployment Path..."
+          cd /www/wwwroot/JHS_TCD || { echo "❌ ERROR: Path not found"; exit 1; }
+          ls -al
+
+          echo "=== Pulling Latest Code ==="
+          git fetch origin main || { echo "❌ ERROR: Git fetch failed"; exit 1; }
+          git reset --hard origin/main || { echo "❌ ERROR: Git reset failed"; exit 1; }
+          git log -1 --oneline
+
+          echo "=== Activating Virtual Environment ==="
+          if [ -d "venv" ]; then
+            source venv/bin/activate
+            echo "✅ Virtual environment activated."
+          else
+            echo "⚠️  Virtual environment not found, creating..."
+            python3 -m venv venv || { echo "❌ ERROR: Failed to create venv"; exit 1; }
+            source venv/bin/activate
+          fi
+
+          echo "=== Installing Dependencies ==="
+          pip install --upgrade pip
+          pip install -r requirements.txt || { echo "❌ ERROR: Requirements installation failed"; exit 1; }
+          echo "✅ Dependencies installed successfully."
+
+          echo "=== Restarting Supervisor Process ==="
+          supervisorctl reread || echo "⚠️ Warning: reread failed"
+          supervisorctl update || echo "⚠️ Warning: update failed"
+          supervisorctl restart JHS_TCD || { echo "❌ ERROR: Supervisor restart failed"; exit 1; }
+
+          echo "=== Checking Supervisor Status ==="
+          supervisorctl status JHS_TCD || echo "⚠️ Could not verify supervisor process"
+
+          echo "=== Deployment Complete ✅ ==="
