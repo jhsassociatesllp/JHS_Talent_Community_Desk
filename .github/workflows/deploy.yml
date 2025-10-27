@@ -29,7 +29,7 @@ jobs:
         host: ${{ secrets.SERVER_IP }}
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
+        port: 2232
         script_stop: true   # stop on first error
         debug: true         # enable detailed ssh debug logs
         script: |
