@@ -26,12 +26,12 @@ jobs:
     - name: 🚀 Start Deployment via SSH
       uses: appleboy/ssh-action@v0.1.7
       with:
-        host: ${{ secrets.SERVER_IP }} ## 
-        username: ${{ secrets.SERVER_USER }} ## root
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SERVER_USER }}  # usually root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 2232
-        script_stop: true   # stop on first error
-        debug: true         # enable detailed ssh debug logs
+        script_stop: true
+        debug: true
         script: |
           set -e  # stop script on any command failure
 
@@ -53,10 +53,18 @@ jobs:
           echo "Listing files:"
           ls -al
 
-          echo "=== 🔁 Pulling Latest Code from GitHub ==="
-          git status || echo "⚠️ Warning: Git repo not initialized"
-          git fetch origin main || { echo "❌ ERROR: Git fetch failed"; exit 1; }
-          git reset --hard origin/main || { echo "❌ ERROR: Git reset failed"; exit 1; }
+          echo "=== 🔁 Checking Git Repository ==="
+          if [ ! -d ".git" ]; then
+            echo "⚠️ No Git repo found — cloning fresh..."
+            rm -rf *
+            git clone https://github.com/jhsassociatesllp/JHS_Talent_Community_Desk.git .
+            echo "✅ Repo cloned successfully!"
+          else
+            echo "✅ Git repo already initialized, pulling latest changes..."
+            git fetch origin main || { echo "❌ ERROR: Git fetch failed"; exit 1; }
+            git reset --hard origin/main || { echo "❌ ERROR: Git reset failed"; exit 1; }
+          fi
+
           echo "✅ Latest commit:"
           git log -1 --oneline
 
