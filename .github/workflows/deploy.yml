@@ -53,6 +53,9 @@ jobs:
           echo "Listing files:"
           ls -al
 
+          echo "=== 🔒 Marking Directory as Safe for Git (before any command) ==="
+          git config --global --add safe.directory /www/wwwroot/JHS_TCD
+
           echo "=== 🔁 Checking Git Repository ==="
           if [ ! -d ".git" ]; then
             echo "⚠️ No Git repo found — cloning fresh..."
@@ -64,9 +67,6 @@ jobs:
             git fetch origin main || { echo "❌ ERROR: Git fetch failed"; exit 1; }
             git reset --hard origin/main || { echo "❌ ERROR: Git reset failed"; exit 1; }
           fi
-
-          echo "=== 🔒 Marking Directory as Safe for Git ==="
-          git config --global --add safe.directory /www/wwwroot/JHS_TCD
 
           echo "✅ Latest commit:"
           git log -1 --oneline || echo "⚠️ Could not display latest commit (possibly fresh clone)"
