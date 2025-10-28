@@ -26,10 +26,10 @@ jobs:
     - name: 🚀 Start Deployment via SSH
       uses: appleboy/ssh-action@v0.1.7
       with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SERVER_USER }}
+        host: ${{ secrets.SERVER_IP }} ## 
+        username: ${{ secrets.SERVER_USER }} ## root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 2232
+        port: 22
         script_stop: true   # stop on first error
         debug: true         # enable detailed ssh debug logs
         script: |
