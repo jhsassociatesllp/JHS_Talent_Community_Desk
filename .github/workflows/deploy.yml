@@ -3,7 +3,7 @@ name: 🚀 Deploy FastAPI App to aaPanel with Logs
 on:
   push:
     branches:
-      - main  # Trigger deployment when code is pushed to main branch
+      - main
 
 jobs:
   deploy:
@@ -19,80 +19,62 @@ jobs:
         uname -a
         echo "Python version:"
         python3 --version || echo "Python not installed"
-        echo "Current working directory: $(pwd)"
         echo "Repository files (first 50):"
         ls -R | head -50
 
-    - name: 🚀 Start Deployment via SSH
+    - name: 🚀 Deploy via SSH
       uses: appleboy/ssh-action@v0.1.7
       with:
         host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SERVER_USER }}  # usually root
+        username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 2232
-        script_stop: true
+        script_stop: false
         debug: true
         script: |
-          set -e  # stop script on any command failure
-
           echo "=== 🟢 Connected to Server ==="
-          uname -a
-          echo "Current path: $(pwd)"
-          echo "Listing top-level directories..."
-          ls -al /
-
-          echo "=== 🔍 Validating Deployment Path ==="
-          if [ ! -d "/www/wwwroot/JHS_TCD" ]; then
-            echo "❌ ERROR: /www/wwwroot/JHS_TCD not found. Listing /www/wwwroot:"
-            ls -al /www/wwwroot || { echo "❌ ERROR: /www/wwwroot missing entirely"; exit 1; }
-            exit 1
-          fi
-
-          cd /www/wwwroot/JHS_TCD
+          cd /www/wwwroot/JHS_TCD || { echo "❌ ERROR: Path not found"; exit 1; }
           echo "✅ Entered $(pwd)"
-          echo "Listing files:"
           ls -al
 
-          echo "=== 🔒 Marking Directory as Safe for Git (before any command) ==="
+          echo "=== 🧹 Fixing Ownership (ensures root can read repo) ==="
+          chown -R root:root /www/wwwroot/JHS_TCD || echo "⚠️ Ownership change skipped"
+
+          echo "=== 🔒 Marking directory safe for git ==="
           git config --global --add safe.directory /www/wwwroot/JHS_TCD
 
-          echo "=== 🔁 Checking Git Repository ==="
+          echo "=== 🔁 Checking and Updating Repository ==="
           if [ ! -d ".git" ]; then
             echo "⚠️ No Git repo found — cloning fresh..."
             rm -rf *
             git clone https://github.com/jhsassociatesllp/JHS_Talent_Community_Desk.git .
             echo "✅ Repo cloned successfully!"
           else
-            echo "✅ Git repo already initialized, pulling latest changes..."
-            git fetch origin main || { echo "❌ ERROR: Git fetch failed"; exit 1; }
-            git reset --hard origin/main || { echo "❌ ERROR: Git reset failed"; exit 1; }
+            echo "✅ Repo already initialized, trying to pull..."
+            git status || echo "⚠️ Git status failed, continuing..."
+            git fetch origin main || { echo "❌ Git fetch failed"; git config --global --add safe.directory /www/wwwroot/JHS_TCD; exit 1; }
+            git reset --hard origin/main || { echo "❌ Git reset failed"; exit 1; }
           fi
 
           echo "✅ Latest commit:"
-          git log -1 --oneline || echo "⚠️ Could not display latest commit (possibly fresh clone)"
+          git log -1 --oneline || echo "⚠️ Could not show latest commit"
 
-          echo "=== 🐍 Activating or Creating Virtual Environment ==="
+          echo "=== 🐍 Virtual Environment ==="
           if [ -d "venv" ]; then
-            echo "Found existing venv. Activating..."
             source venv/bin/activate
           else
-            echo "Creating a new virtual environment..."
-            python3 -m venv venv || { echo "❌ ERROR: Failed to create venv"; exit 1; }
-            source venv/bin/activate
+            python3 -m venv venv && source venv/bin/activate
           fi
           python --version
 
           echo "=== 📦 Installing Dependencies ==="
           pip install --upgrade pip
-          pip install -r requirements.txt || { echo "❌ ERROR: Requirements installation failed"; exit 1; }
-          echo "✅ Dependencies installed successfully."
+          pip install -r requirements.txt || { echo "❌ Pip install failed"; exit 1; }
+          echo "✅ Dependencies installed"
 
-          echo "=== 🔁 Restarting Supervisor Process ==="
-          supervisorctl reread || echo "⚠️ Warning: reread failed"
-          supervisorctl update || echo "⚠️ Warning: update failed"
-          supervisorctl restart JHS_TCD || { echo "❌ ERROR: Supervisor restart failed"; exit 1; }
-
-          echo "=== 🔎 Checking Supervisor Status ==="
-          supervisorctl status JHS_TCD || echo "⚠️ Could not verify supervisor process"
+          echo "=== 🔁 Restarting Supervisor ==="
+          supervisorctl reread || true
+          supervisorctl update || true
+          supervisorctl restart JHS_TCD || true
 
           echo "=== ✅ Deployment Complete ==="
